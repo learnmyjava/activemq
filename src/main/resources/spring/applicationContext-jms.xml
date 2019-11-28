@@ -37,6 +37,7 @@
 	</bean>
 
 	<!-- 配置JMS模版 -->
+	<!-- 作用: spring自带的jms 将消息放到mq队列 -->
 	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
 		<property name="connectionFactory" ref="connectionFactory" />
 		<property name="receiveTimeout" value="${jms.revieve.timeout}" />

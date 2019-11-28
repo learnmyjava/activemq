@@ -28,11 +28,9 @@ public class AppTest {
 //		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("class:spring/applicationContext-jms.xml");
 		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
 		// 第二步：从容器中获得JMSTemplate对象。
-//		JmsTemplate jmsTemplate = (JmsTemplate) applicationContext.getBean("jmsTemplate");
 		long starttime = System.currentTimeMillis();
-		for (int i = 0; i < 100000; i++) {
+		for (int i = 0; i < 10000; i++) {
 			JmsTemplate jmsTemplate = (JmsTemplate) applicationContext.getBean("jmsTemplate");
-
 			// 第三步：从容器中获得一个Destination对象
 			Queue queue = (Queue) applicationContext.getBean("txnQueue");
 			// 第四步：使用JMSTemplate对象发送消息，需要知道Destination
