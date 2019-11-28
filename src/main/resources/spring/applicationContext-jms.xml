@@ -53,5 +53,8 @@
 	</bean>
 
 
+	<bean id="txnTopic" class="org.apache.activemq.command.ActiveMQTopic">
+		<constructor-arg index="0" value="${jms.topic.txnTopic}" />
+	</bean>
 
 </beans>
