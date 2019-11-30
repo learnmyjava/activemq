@@ -30,18 +30,19 @@ public class AppTest {
 		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
 		// 第二步：从容器中获得JMSTemplate对象。
 		long starttime = System.currentTimeMillis();
-		for (int i = 1; i <=1000; i++) {
+		for (int i = 1; i <=10; i++) {
 			final String sendmessage = String.valueOf(i);
 			JmsTemplate jmsTemplate = (JmsTemplate) applicationContext.getBean("jmsTemplate");
 			// 第三步：从容器中获得一个Destination对象
-//			Queue queue = (Queue) applicationContext.getBean("txnQueue");
-			Topic queue = (Topic) applicationContext.getBean("txnTopic");
+			Queue queue = (Queue) applicationContext.getBean("txnQueue");
+//			Topic queue = (Topic) applicationContext.getBean("txnTopic");
 			// 第四步：使用JMSTemplate对象发送消息，需要知道Destination
 			jmsTemplate.send(queue, new MessageCreator() {
 				
 				@Override
 				public Message createMessage(Session session) throws JMSException {
 					TextMessage textMessage = session.createTextMessage("第"+sendmessage+"条消息:hello consumer I am producer");
+					textMessage.setStringProperty("receiveSystem", "1210000002");
 					return textMessage;
 				}
 			});
