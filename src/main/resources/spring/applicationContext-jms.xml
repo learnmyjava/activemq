@@ -41,8 +41,14 @@
 	<bean id="jmsTemplate" class="org.springframework.jms.core.JmsTemplate">
 		<property name="connectionFactory" ref="connectionFactory" />
 		<property name="receiveTimeout" value="${jms.revieve.timeout}" />
-		<property name="deliveryMode" value="1" />
-		<property name="explicitQosEnabled" value="true" />
+		
+		<!-- JmsTemplate内部默认持久化机制即不配置 -->
+		<property name="deliveryMode" value="2" /><!--持久化配置 1非持久化，2持久化  -->
+		
+         <!-- 开启订阅模式 -->  
+        <property name="pubSubDomain" value="true" />
+
+ 
 		<property name="timeToLive" value="3600000" />
 	</bean>
 

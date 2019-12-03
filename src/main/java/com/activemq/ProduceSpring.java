@@ -10,7 +10,8 @@ public final class ProduceSpring {
 	/**
 	 * @param args
 	 */
-	private final static Logger LOG = LoggerFactory.getLogger(ProduceSpring.class);
+	private final static Logger LOG = LoggerFactory
+			.getLogger(ProduceSpring.class);
 
 	/**
 	 * Hide Utility Class Constructor
