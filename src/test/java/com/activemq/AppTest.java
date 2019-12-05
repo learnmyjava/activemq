@@ -95,7 +95,7 @@ public class AppTest {
 					// 如果消费者设置了过滤器，此处发送前需要指定此参数
 					textMessage
 							.setStringProperty("receiveSystem", "1210000001");
-					textMessage.setStringProperty("txncode", "0220");
+					textMessage.setStringProperty("txncode", "0230");
 
 					return textMessage;
 				}
