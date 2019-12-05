@@ -31,7 +31,7 @@ public class AppTest {
 				"applicationContext.xml");
 		// 第二步：从容器中获得JMSTemplate对象。
 		long starttime = System.currentTimeMillis();
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 1; i <= 1; i++) {
 			final String sendmessage = String.valueOf(i);
 			JmsTemplate jmsTemplate = (JmsTemplate) applicationContext
 					.getBean("jmsTemplate");
@@ -47,8 +47,8 @@ public class AppTest {
 					TextMessage textMessage = session.createTextMessage("第"
 							+ sendmessage + "条消息:hello consumer I am producer");
 					// 如果消费者设置了过滤器，此处发送前需要指定此参数
-					textMessage
-							.setStringProperty("receiveSystem", "1210000001");
+					textMessage.setStringProperty("receiveSystem", "1210000001");
+					textMessage.setStringProperty("txncode", "0230");
 					return textMessage;
 				}
 			});
@@ -78,7 +78,7 @@ public class AppTest {
 				"applicationContext.xml");
 		// 第二步：从容器中获得JMSTemplate对象。
 		long starttime = System.currentTimeMillis();
-		for (int i = 1; i <= 10; i++) {
+		for (int i = 1; i <= 1; i++) {
 			final String sendmessage = String.valueOf(i);
 			JmsTemplate jmsTemplate = (JmsTemplate) applicationContext
 					.getBean("jmsTemplate");
@@ -95,6 +95,8 @@ public class AppTest {
 					// 如果消费者设置了过滤器，此处发送前需要指定此参数
 					textMessage
 							.setStringProperty("receiveSystem", "1210000001");
+					textMessage.setStringProperty("txncode", "0230");
+
 					return textMessage;
 				}
 			});

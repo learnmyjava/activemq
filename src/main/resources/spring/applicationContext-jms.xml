@@ -11,11 +11,12 @@
    	http://www.springframework.org/schema/mvc http://www.springframework.org/schema/mvc/spring-mvc-3.1.xsd
    	http://www.springframework.org/schema/util http://www.springframework.org/schema/util/spring-util-3.1.xsd">
 
-
+    
 
 
 	<!-- 配置JMS连接工厂 -->
 	<!-- 采用TCP长连接方式, 避免每次建立短连接需要的额外工作时间 -->
+	<!--使用 PooledConnectionFactory 对session和消息的缓存机制 	起到性能提升的作用 -->
 	<bean id="connectionFactory" class="org.apache.activemq.pool.PooledConnectionFactory"
 		destroy-method="stop">
 		<property name="maxConnections" value="10" />
@@ -30,7 +31,6 @@
 				<property name="userName" value="${jms.username}" />
 				<property name="password" value="${jms.password}" />
 				<property name="copyMessageOnSend" value="false" />
-				<property name="optimizeAcknowledge" value="false" /><!-- 关闭ack机制 -->
 				<property name="alwaysSessionAsync" value="true" />
 			</bean>
 		</property>
