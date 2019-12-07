@@ -52,6 +52,11 @@
 		<property name="timeToLive" value="3600000" />
 	</bean>
 
+	<bean id="txnReplyQueue" class="org.apache.activemq.command.ActiveMQQueue">
+		<constructor-arg index="0" value="${jms.queue.txnReplyQueue}" />
+	</bean>
+
+
 
 	<!-- queue start 点对点 -->
 	<bean id="txnQueue" class="org.apache.activemq.command.ActiveMQQueue">
@@ -62,5 +67,27 @@
 	<bean id="txnTopic" class="org.apache.activemq.command.ActiveMQTopic">
 		<constructor-arg index="0" value="${jms.topic.txnTopic}" />
 	</bean>
+	
 
+
+	<!-- 监听器    监听队列从队列上拉取消息-->
+	<bean id="clientListenerContainer" class="com.activem.jmsServer.ClientReplyMsgListenerContainer"
+		destroy-method="destroy">
+		<property name="concurrentConsumers" value="${jms.minListener}" />
+		<property name="maxConcurrentConsumers" value="${jms.maxListener}" />
+		<property name="connectionFactory" ref="connectionFactory" />
+		<property name="destination" ref="txnReplyQueue" />
+		<property name="messageListener" ref="txnListener" /><!-- 真正的消费者 -->
+	</bean>
+
+	
+	<bean id="jmshandler" class="com.activemq.JMSUtil" />
+	
+
+	<bean id="txnListener" class="com.activem.jmsServer.JmsClientRecvListener">
+		<property name="clientrecv" ref="jmshandler"/>
+	</bean>
+
+
+	
 </beans>

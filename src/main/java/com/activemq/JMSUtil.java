@@ -1,5 +1,10 @@
 package com.activemq;
 
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
+
+import javax.jms.Destination;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.Queue;
@@ -17,8 +22,11 @@ import org.springframework.jms.core.MessageCreator;
 /**
  * Unit test for simple App.
  */
-public class AppTest {
+public class JMSUtil {
+	/**以报文流水id 为主键的一个线程安全的haspmap*/
+	ConcurrentMap<String, RecvMessageBean> excuterthreadsmap = new ConcurrentHashMap<String, RecvMessageBean>();
 	/**
+	 * 异步无返回
 	 * 点对点 将消息发送到mq队列存储 一条消息只能被一个消费者消费
 	 * 没有被消费的会被存储
 	 */
@@ -60,6 +68,7 @@ public class AppTest {
 	}
 
 	/**
+	 * 异步无返回
 	 * 发布订阅 
 	 * 生产者开启持久化订阅持久化消息到文件或者数据库(数据库: mq重启后消息被清除)
 	 * 
@@ -105,6 +114,68 @@ public class AppTest {
 		long endtime = System.currentTimeMillis();
 		System.out.println("发送总耗时:" + (endtime - starttime) + "ms");
 
+	}
+	
+	/***
+	 * 伪同步
+	 *发送端作为消费者 将接收的消息放到 excuterthreadsmap，在根据消息id获取，在同一个方法中实现伪同步
+	 */
+	@Test
+	public void mqQueueback(){
+		//第一步
+		ApplicationContext applicationContext = new ClassPathXmlApplicationContext("applicationContext.xml");
+		long starttime = System.currentTimeMillis();
+		
+		final String msgid= UUID.randomUUID().toString();
+		
+		RecvMessageBean recvMessageBean = new RecvMessageBean();
+		excuterthreadsmap.putIfAbsent(msgid, recvMessageBean);
+		
+		// 第二步：从容器中获得JMSTemplate对象。
+		JmsTemplate jmsTemplate = (JmsTemplate) applicationContext
+				.getBean("jmsTemplate");
+		// 第三步：从容器中获得一个Destination对象
+		Queue queue = (Queue) applicationContext.getBean("txnQueue");
+		final Destination respDestqueue = (Queue) applicationContext.getBean("txnReplyQueue");//返回目的
+		
+		
+		// Topic queue = (Topic) applicationContext.getBean("txnTopic");
+		// 第四步：使用JMSTemplate对象发送消息，需要知道Destination
+		jmsTemplate.send(queue, new MessageCreator() {
+
+			@Override
+			public Message createMessage(Session session)
+					throws JMSException {
+				Message textMessage = session.createTextMessage("hello consumer I am producer");
+				textMessage.setJMSReplyTo(respDestqueue);
+				
+				// 如果消费者设置了过滤器，此处发送前需要指定此参数
+				textMessage.setStringProperty("reqTxnSeq", msgid);
+				textMessage.setStringProperty("receiveSystem", "1210000001");
+				textMessage.setStringProperty("txncode", "0220");
+				return textMessage;
+			}
+		});
+
+		long endtime = System.currentTimeMillis();
+		System.out.println("发送总耗时:" + (endtime - starttime) + "ms");
+
+	
+		
+	}
+
+	
+	public void recvmessagefromserver(Message message) {
+		
+		TextMessage msg = (TextMessage) message;
+		try {
+			String returnmessage = msg.getText();
+			System.out.println("收到信息:"+returnmessage);
+			
+		} catch (JMSException e) {
+			e.printStackTrace();
+		}
+		
 	}
 
 }

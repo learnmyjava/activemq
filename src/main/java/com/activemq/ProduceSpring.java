@@ -22,6 +22,7 @@ public final class ProduceSpring {
 	public static void main(String[] args) {
 		/* 开始加载spring配置文件 */
 		ConfigurableApplicationContext spirngload = getApplicationContext();
+		LOG.info("开始liseneing.....");
 		/* 注册shutdown钩子 */
 		spirngload.registerShutdownHook();
 	}
