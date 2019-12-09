@@ -3,6 +3,7 @@ package com.activemq;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -24,7 +25,8 @@ import org.springframework.jms.core.MessageCreator;
  */
 public class JMSUtil {
 	/**以报文流水id 为主键的一个线程安全的haspmap*/
-	ConcurrentMap<String, RecvMessageBean> excuterthreadsmap = new ConcurrentHashMap<String, RecvMessageBean>();
+	 ConcurrentMap<String, RecvMessageBean> excuterthreadsmap = new ConcurrentHashMap<String, RecvMessageBean>();
+
 	/**
 	 * 异步无返回
 	 * 点对点 将消息发送到mq队列存储 一条消息只能被一个消费者消费
@@ -119,6 +121,11 @@ public class JMSUtil {
 	/***
 	 * 伪同步
 	 *发送端作为消费者 将接收的消息放到 excuterthreadsmap，在根据消息id获取，在同一个方法中实现伪同步
+	 *
+	 *
+	 *Semaphore 在计数器不为 0 的时候对线程就放行，一旦达到 0，那么所有请求资源的新线程都会被阻塞，包括增加请求到许可的线程，Semaphore 是不可重入的。
+		每一次请求一个许可都会导致计数器减少 1，同样每次释放一个许可都会导致计数器增加 1，一旦达到 0，新的许可请求线程将被挂起。
+
 	 */
 	@Test
 	public void mqQueueback(){
@@ -127,6 +134,7 @@ public class JMSUtil {
 		long starttime = System.currentTimeMillis();
 		
 		final String msgid= UUID.randomUUID().toString();
+		System.out.println("发送消息id:"+msgid);
 		
 		RecvMessageBean recvMessageBean = new RecvMessageBean();
 		excuterthreadsmap.putIfAbsent(msgid, recvMessageBean);
@@ -138,7 +146,7 @@ public class JMSUtil {
 		Queue queue = (Queue) applicationContext.getBean("txnQueue");
 		final Destination respDestqueue = (Queue) applicationContext.getBean("txnReplyQueue");//返回目的
 		
-		
+		boolean resultflag = false;//该资源上是否有回文
 		// Topic queue = (Topic) applicationContext.getBean("txnTopic");
 		// 第四步：使用JMSTemplate对象发送消息，需要知道Destination
 		jmsTemplate.send(queue, new MessageCreator() {
@@ -159,8 +167,30 @@ public class JMSUtil {
 
 		long endtime = System.currentTimeMillis();
 		System.out.println("发送总耗时:" + (endtime - starttime) + "ms");
-
+		
+		try {
+			//挂在资源上,等待getReceiveTimeout ms 内是否有回文
+			resultflag = recvMessageBean.getRecvsemap().tryAcquire(jmsTemplate.getReceiveTimeout(),TimeUnit.MILLISECONDS);//获取一个许可
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
 	
+		RecvMessageBean tempResultBean = excuterthreadsmap.remove(msgid);
+		if(resultflag && tempResultBean !=null ){
+			Message msg = tempResultBean.getRecvmsg();
+			if(msg !=null ){
+				TextMessage message = (TextMessage) msg;
+				try {
+					String returnmsg = message.getText();
+					System.out.println("伪同步响应:"+returnmsg);
+				} catch (JMSException e) {
+					e.printStackTrace();
+				}
+			}else{
+				System.out.println("没有响应");
+			}
+		}
+		
 		
 	}
 
@@ -171,6 +201,17 @@ public class JMSUtil {
 		try {
 			String returnmessage = msg.getText();
 			System.out.println("收到信息:"+returnmessage);
+			String msgid = message.getStringProperty("reqTxnSeq");
+			System.out.println("收到信息id:"+msgid);
+
+			RecvMessageBean tempresvBean = excuterthreadsmap.get(msgid);//key 对应的bean(发送之前放入map)
+			if(tempresvBean !=null ){
+				tempresvBean.setRecvmsg(message);//将返回的message设置给bean
+				tempresvBean.getRecvsemap().release();//将消息挂在资源上，同时唤醒工作线程    //释放一个许可
+			}else{
+				System.out.println(" recvmessagefromserver key [{}]: is null"+msgid);
+
+			}
 			
 		} catch (JMSException e) {
 			e.printStackTrace();
