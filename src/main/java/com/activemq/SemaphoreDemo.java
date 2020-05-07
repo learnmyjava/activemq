@@ -33,7 +33,7 @@ public class SemaphoreDemo {
 		public void run() {
 			int stoptime=new Random().nextInt(10);
 			try {
-				semaphore.acquire();//车辆运行进入
+				semaphore.acquire();//车辆允许进入
 				System.out.println("车"+this.name+"车辆进入");
 				TimeUnit.SECONDS.sleep(stoptime);//
 				
